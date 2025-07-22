@@ -1,0 +1,57 @@
+# === Flutter ===
+# Miscellaneous
+app/*.class
+app/*.log
+app/*.pyc
+app/*.swp
+app/.DS_Store
+app/.atom/
+app/.build/
+app/.buildlog/
+app/.history/
+app/.svn/
+app/.swiftpm/
+app/migrate_working_dir/
+
+# IntelliJ related
+app/*.iml
+app/*.ipr
+app/*.iws
+app/.idea/
+
+# VS Code (optional to ignore)
+app/.vscode/
+
+# Flutter/Dart/Pub related
+app/doc/api/
+app/ios/Flutter/.last_build_id
+app/.dart_tool/
+app/.flutter-plugins
+app/.flutter-plugins-dependencies
+app/.pub-cache/
+app/.pub/
+app/build/
+
+# Symbolication related
+app/app.*.symbols
+
+# Obfuscation related
+app/app.*.map.json
+
+# Android build artifacts
+app/android/app/debug/
+app/android/app/profile/
+app/android/app/release/
+
+# === Firmware ===
+firmware/build/
+firmware/sdkconfig
+firmware/sdkconfig.old
+firmware/.vscode/
+firmware/.DS_Store
+
+# === Common Editor/OS Trash ===
+*.swp
+*.swo
+*~
+*.env
