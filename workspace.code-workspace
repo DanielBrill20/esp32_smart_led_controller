@@ -1,0 +1,21 @@
+{
+	"folders": [
+		{
+			"name": "firmware",
+			"path": "firmware"
+		},
+		{
+			"name": "app",
+			"path": "app"
+		},
+		{
+			"name": "esp32_smart_led_controller",
+			"path": "."
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"led_strip.h": "c"
+		}
+	}
+}
