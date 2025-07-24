@@ -131,170 +131,155 @@ class RemotePage extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           // LIGHT
-          Container(
-            width: double.infinity,
-            child: Card(
-              color: theme.colorScheme.primary,
-              child: Padding(
-                padding: EdgeInsets.all(20),
-                child: Row(
-                  children: [
-                    RotatedBox(
-                      quarterTurns: 3,
-                      child: Text(
-                        'Light',
-                        style: theme.textTheme.headlineMedium,
-                      ),
-                    ),
-                    Expanded(
-                      child: Center(
-                        child: Switch(
-                          value: ledState.lightOn,
-                          onChanged: (value) {
-                            ledState.setLightOn(value);
-                          },
-                        ),
-                      ),
-                    ),
-                  ],
+          FeatureSection(
+            theme: theme,
+            ledState: ledState,
+            title: 'Light',
+            children: [
+              Expanded(
+                child: Center(
+                  child: Switch(
+                    value: ledState.lightOn,
+                    onChanged: (value) {
+                      ledState.setLightOn(value);
+                    },
+                  ),
                 ),
               ),
-            ),
+              Expanded(
+                flex: 2,
+                child: SizedBox(),
+              ),
+            ],
           ),
           // BLINKY
-          Container(
-            width: double.infinity,
-            child: Card(
-              color: theme.colorScheme.primary,
-              child: Padding(
-                padding: EdgeInsets.all(20),
-                child: Row(
-                  children: [
-                    Expanded(
-                      flex: 2,
-                      child: RotatedBox(
-                        quarterTurns: 3,
-                        child: Text(
-                          'Blinky',
-                          style: theme.textTheme.headlineMedium,
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      flex: 5,
-                      child: TextField(
-                        keyboardType: TextInputType.number,
-                        decoration: InputDecoration(
-                          border: OutlineInputBorder(),
-                          labelText: 'Duration',
-                        ),
-                      ),
-                    ),
-                    Expanded(flex: 1, child: Center(child: Text('ms'))),
-                    ElevatedButton(
-                      onPressed: () {},
-                      child: Icon(Icons.send),
-                    ),
-                  ],
+          FeatureSection(
+            theme: theme,
+            ledState: ledState,
+            title: 'Blinky',
+            children: [
+              Expanded(
+                flex: 5,
+                child: TextField(
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(),
+                    labelText: 'Duration',
+                  ),
                 ),
               ),
-            ),
+              Expanded(flex: 1, child: Center(child: Text('ms'))),
+              ElevatedButton(
+                onPressed: () {},
+                child: Icon(Icons.send),
+              ),
+            ],
           ),
           // MORSE CODE
-          Container(
-            width: double.infinity,
-            child: Card(
-              color: theme.colorScheme.primary,
-              child: Padding(
-                padding: EdgeInsets.all(20),
-                child: Row(
-                  children: [
-                    Expanded(
-                      flex: 2,
-                      child: RotatedBox(
-                        quarterTurns: 3,
-                        child: Column(
-                          children: [
-                            Text(
-                              'Morse',
-                              style: theme.textTheme.headlineMedium,
-                            ),
-                            Text(
-                              'Code',
-                              style: theme.textTheme.headlineMedium,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      flex: 5,
-                      child: TextField(
-                        keyboardType: TextInputType.text,
-                        decoration: InputDecoration(
-                          border: OutlineInputBorder(),
-                          labelText: 'Message',
-                        ),
-                      ),
-                    ),
-                    Expanded(flex: 1, child: SizedBox()),
-                    ElevatedButton(
-                      onPressed: () {},
-                      child: Icon(Icons.send),
-                    ),
-                  ],
+          FeatureSection(
+            theme: theme,
+            ledState: ledState,
+            title: 'Morse Code',
+            children: [
+              Expanded(
+                flex: 5,
+                child: TextField(
+                  keyboardType: TextInputType.text,
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(),
+                    labelText: 'Message',
+                  ),
                 ),
               ),
-            ),
+              Expanded(flex: 1, child: SizedBox()),
+              ElevatedButton(
+                onPressed: () {},
+                child: Icon(Icons.send),
+              ),
+            ],
           ),
           // COLOR
-          Container(
-            width: double.infinity,
-            child: Card(
-              color: theme.colorScheme.primary,
-              child: Padding(
-                padding: EdgeInsets.all(20),
-                child: IntrinsicHeight(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
+          FeatureSection(
+            theme: theme,
+            ledState: ledState,
+            title: 'Color', 
+            children: [
+              Column(
+                children: [
+                  RGBSlider(
+                    rgbIndex: ColorEnum.red,
+                  ),
+                  RGBSlider(
+                    rgbIndex: ColorEnum.green,
+                  ),
+                  RGBSlider(
+                    rgbIndex: ColorEnum.blue,
+                  ),
+                ],
+              ),
+              Expanded(
+                flex: 2,
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 8),
+                  child: SizedBox(
+                    height: 200,
+                    child: ColoredBox(color: Color.fromRGBO(
+                      ledState.colorList[ColorEnum.red.index],
+                      ledState.colorList[ColorEnum.green.index],
+                      ledState.colorList[ColorEnum.blue.index], 1)
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class FeatureSection extends StatelessWidget {
+  const FeatureSection({
+    super.key,
+    required this.theme,
+    required this.ledState,
+    required this.title,
+    required this.children,
+  });
+
+  final ThemeData theme;
+  final LedState ledState;
+  final String title;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: Card(
+        color: theme.colorScheme.primary,
+        child: Padding(
+          padding: EdgeInsets.all(20),
+          child: Row(
+            children: [
+              Expanded(
+                flex: 2,
+                child: RotatedBox(
+                  quarterTurns: 3,
+                  child: Column(
                     children: [
-                      RotatedBox(
-                        quarterTurns: 3,
-                        child: Text(
-                          'Color',
-                          style: theme.textTheme.headlineMedium,
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                      Column(
-                        children: [
-                          RGBSlider(
-                            rgbIndex: ColorEnum.red,
-                          ),
-                          RGBSlider(
-                           rgbIndex: ColorEnum.green,
-                          ),
-                          RGBSlider(
-                            rgbIndex: ColorEnum.blue,
-                          ),
-                        ],
-                      ),
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 8),
-                          child: ColoredBox(color: Color.fromRGBO(
-                            ledState.colorList[ColorEnum.red.index],
-                            ledState.colorList[ColorEnum.green.index],
-                            ledState.colorList[ColorEnum.blue.index], 1)
-                          ),
-                      )),
+                      for (var widget in WordsToTextWidgets(title, theme.textTheme.headlineMedium))
+                        widget,
                     ],
                   ),
                 ),
               ),
-            ),
+              for (var widget in children)
+                widget,
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -396,4 +381,16 @@ class _RGBSliderState extends State<RGBSlider> {
       ),
     );
   }
+}
+
+List<Text> WordsToTextWidgets(String words, TextStyle? style) {
+  List<Text> textWidgets = [];
+  for (var word in words.split(' ')) {
+    Text text = Text(
+      word,
+      style: style
+    );
+    textWidgets.add(text);
+  }
+  return textWidgets;
 }
