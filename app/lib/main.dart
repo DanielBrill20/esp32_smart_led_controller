@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+enum ColorEnum {red, green, blue}
 
 void main() {
   runApp(const MyApp());
@@ -9,15 +12,34 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'ESP32 RGB LED Remote Control',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepOrange),
+    return ChangeNotifierProvider(
+      create: (context) => LedState(),
+      child: MaterialApp(
+        title: 'ESP32 RGB LED Remote Control',
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepOrange),
+        ),
+        home: const MyHomePage(),
       ),
-      home: const MyHomePage(),
     );
   }
 }
+
+class LedState extends ChangeNotifier {
+  List<int> colorList = [0, 0, 0];
+  bool lightOn = false;
+
+  void setColor(ColorEnum color, int value) {
+    colorList[color.index] = value;
+    notifyListeners();
+  }
+
+  void setLightOn(bool value) {
+    lightOn = value;
+    notifyListeners();
+  }
+}
+
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key});
 
@@ -95,22 +117,13 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 }
 
-class RemotePage extends StatefulWidget {
+class RemotePage extends StatelessWidget {
   const RemotePage({super.key});
-
-  @override
-  State<RemotePage> createState() => _RemotePageState();
-}
-
-class _RemotePageState extends State<RemotePage> {
-  var lightOn = false;
-  int red = 0;
-  int green = 0;
-  int blue = 0;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    var ledState = context.watch<LedState>();
 
     return Padding(
       padding: const EdgeInsets.all(3),
@@ -136,11 +149,9 @@ class _RemotePageState extends State<RemotePage> {
                     Expanded(
                       child: Center(
                         child: Switch(
-                          value: lightOn,
+                          value: ledState.lightOn,
                           onChanged: (value) {
-                            setState(() {
-                              lightOn = value;
-                            });
+                            ledState.setLightOn(value);
                           },
                         ),
                       ),
@@ -258,26 +269,24 @@ class _RemotePageState extends State<RemotePage> {
                       Column(
                         children: [
                           RGBSlider(
-                            color: Colors.red,
-                            colorVal: red,
-                            onChanged: (value) => setState(() => red = value),
+                            rgbIndex: ColorEnum.red,
                           ),
                           RGBSlider(
-                            color: Colors.green,
-                            colorVal: green,
-                            onChanged: (value) => setState(() => green = value),
+                           rgbIndex: ColorEnum.green,
                           ),
                           RGBSlider(
-                            color: Colors.blue,
-                            colorVal: blue,
-                            onChanged: (value) => setState(() => blue = value),
+                            rgbIndex: ColorEnum.blue,
                           ),
                         ],
                       ),
                       Expanded(
                         child: Padding(
                           padding: const EdgeInsets.only(left: 8),
-                          child: ColoredBox(color: Color.fromRGBO(red, green, blue, 1)),
+                          child: ColoredBox(color: Color.fromRGBO(
+                            ledState.colorList[ColorEnum.red.index],
+                            ledState.colorList[ColorEnum.green.index],
+                            ledState.colorList[ColorEnum.blue.index], 1)
+                          ),
                       )),
                     ],
                   ),
@@ -294,53 +303,90 @@ class _RemotePageState extends State<RemotePage> {
 class RGBSlider extends StatefulWidget {
   const RGBSlider({
     super.key,
-    required this.color,
-    required this.colorVal,
-    required this.onChanged,
+    required this.rgbIndex,
   });
-  final Color color;
-  final int colorVal;
-  final ValueChanged<int> onChanged;
+  final ColorEnum rgbIndex;
 
   @override
   State<RGBSlider> createState() => _RGBSliderState();
 }
 
 class _RGBSliderState extends State<RGBSlider> {
-  var controller = TextEditingController();
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    final ledState = context.read<LedState>();
+    _controller = TextEditingController(
+      text: '${ledState.colorList[widget.rgbIndex.index]}'
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(covariant RGBSlider oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final ledState = context.read<LedState>();
+    final currentValue = _controller.text;
+    final newValue = '${ledState.colorList[widget.rgbIndex.index]}';
+
+    if (currentValue != newValue) {
+      _controller.text = newValue;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    controller.text = '${widget.colorVal}';
+    var ledState = context.watch<LedState>();
+    var colorValue = ledState.colorList[widget.rgbIndex.index];
+
+    Color sliderColor;
+    switch (widget.rgbIndex) {
+      case ColorEnum.red:
+        sliderColor = Colors.red;
+        break;
+      case ColorEnum.green:
+        sliderColor = Colors.green;
+        break;
+      case ColorEnum.blue:
+        sliderColor = Colors.blue;
+        break;
+    }
 
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Row(
         children: [
           Slider(
-            value: widget.colorVal.toDouble(),
+            value: colorValue.toDouble(),
             min: 0,
             max: 255,
             onChanged: (value) {
-              widget.onChanged(value.round());
+              ledState.setColor(widget.rgbIndex, value.round());
             },
-            activeColor: widget.color,
+            activeColor: sliderColor,
           ),
           SizedBox(
             width: 55,
             child: TextField(
               keyboardType: TextInputType.number,
               decoration: InputDecoration(border: OutlineInputBorder()),
-              controller: controller,
+              controller: _controller,
               onChanged: (value) {
                 if (value == '') {
-                  widget.onChanged(0);
+                  ledState.setColor(widget.rgbIndex, 0);
                 } else {
                   var inputVal = int.tryParse(value);
                   if (inputVal == null || inputVal < 0 || inputVal > 255) {
-                    widget.onChanged(widget.colorVal);
+                    ledState.setColor(widget.rgbIndex, ledState.colorList[widget.rgbIndex.index]);
                   } else {
-                    widget.onChanged(inputVal);
+                    ledState.setColor(widget.rgbIndex, inputVal);
                   }
                 }
               },
