@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 enum ColorEnum {red, green, blue}
+enum CommsEnum {ble, wifi}
 
 void main() {
   runApp(const MyApp());
@@ -50,7 +51,7 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   int selectedPageIndex = 0;
   Widget selectedPage = RemotePage();
-  var commsSwitchSelected = 'ble';
+  CommsEnum commsSwitchSelected = CommsEnum.wifi;
 
   @override
   Widget build(BuildContext context) {
@@ -73,18 +74,18 @@ class _MyHomePageState extends State<MyHomePage> {
             SegmentedButton(
               segments: [
                 ButtonSegment(
-                  value: 'ble',
-                  icon: Icon(Icons.bluetooth),
+                  value: CommsEnum.wifi,
+                  icon: Icon(Icons.wifi),
                 ),
                 ButtonSegment(
-                  value: 'wifi',
-                  icon: Icon(Icons.wifi),
+                  value: CommsEnum.ble,
+                  icon: Icon(Icons.bluetooth),
                 ),
               ],
               selected: {commsSwitchSelected},
               onSelectionChanged: (value) {
                 setState(() {
-                  commsSwitchSelected=='ble' ? commsSwitchSelected='wifi' : commsSwitchSelected='ble';
+                  commsSwitchSelected = value.first;
                 });
               },
               showSelectedIcon: false,
@@ -383,14 +384,5 @@ class _RGBSliderState extends State<RGBSlider> {
   }
 }
 
-List<Text> WordsToTextWidgets(String words, TextStyle? style) {
-  List<Text> textWidgets = [];
-  for (var word in words.split(' ')) {
-    Text text = Text(
-      word,
-      style: style
-    );
-    textWidgets.add(text);
-  }
-  return textWidgets;
-}
+List<Text> WordsToTextWidgets(String words, TextStyle? style) =>
+  words.split(' ').map((word) => Text(word, style: style)).toList();
