@@ -15,7 +15,8 @@
 	],
 	"settings": {
 		"files.associations": {
-			"led_strip.h": "c"
+			"led_strip.h": "c",
+			"esp_http_server.h": "c"
 		}
 	}
 }
