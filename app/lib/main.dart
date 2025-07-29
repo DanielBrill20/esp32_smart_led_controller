@@ -270,7 +270,7 @@ class FeatureSection extends StatelessWidget {
                   quarterTurns: 3,
                   child: Column(
                     children: [
-                      for (var widget in WordsToTextWidgets(title, theme.textTheme.headlineMedium))
+                      for (var widget in wordsToTextWidgets(title, theme.textTheme.headlineMedium))
                         widget,
                     ],
                   ),
@@ -384,5 +384,5 @@ class _RGBSliderState extends State<RGBSlider> {
   }
 }
 
-List<Text> WordsToTextWidgets(String words, TextStyle? style) =>
+List<Text> wordsToTextWidgets(String words, TextStyle? style) =>
   words.split(' ').map((word) => Text(word, style: style)).toList();
