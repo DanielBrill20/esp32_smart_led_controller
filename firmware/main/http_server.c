@@ -108,7 +108,7 @@ static void register_uri_handlers()
     ESP_LOGI(SERVER_TAG, "URI handlers registered");
 }
 
-// TODO: Add a stop server function? Maybe also deinit or simular in wifi module?
+// TODO: Add a stop server function? Maybe also deinit or similar in wifi module?
 
 void http_server_init()
 {
