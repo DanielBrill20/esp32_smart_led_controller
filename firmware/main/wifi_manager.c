@@ -17,7 +17,7 @@ static void event_handler(void* arg, esp_event_base_t event_base, int32_t event_
         ESP_LOGI(WIFI_TAG, "Connection to AP started successfully");
     } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
         if (connection_attempts < 5) {
-            ESP_LOGI(WIFI_TAG, "Failed to connect to the AP, retrying...");
+            ESP_LOGW(WIFI_TAG, "Failed to connect to the AP, retrying...");
             ESP_ERROR_CHECK(esp_wifi_connect());
             connection_attempts++;
         } else {
@@ -116,7 +116,7 @@ static void wait_for_connection()
     if (wifi_event_bits & WIFI_CONNECTED_BIT) {
         ESP_LOGI(WIFI_TAG, "Connected to network %s", CONFIG_WIFI_SSID);
     } else if (wifi_event_bits & WIFI_FAILED_BIT) {
-        ESP_LOGI(WIFI_TAG, "Failed to connect to network %s", CONFIG_WIFI_SSID);
+        ESP_LOGE(WIFI_TAG, "Failed to connect to network %s", CONFIG_WIFI_SSID);
     } else {
         ESP_LOGE(WIFI_TAG, "Unexpected event, wifi setup neither connected nor failed.");
     }
