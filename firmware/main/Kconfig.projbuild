@@ -1,4 +1,10 @@
-menu "WiFi Connection Configuration"
+menu "Project Configuration"
+    config LED_GPIO
+        int "LED GPIO"
+        default 38
+        help
+            GPIO pin used by the LED.
+
     config WIFI_SSID
         string "WiFi SSID"
         default "myssid"
