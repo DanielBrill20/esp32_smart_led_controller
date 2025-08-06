@@ -1,3 +1,6 @@
+#ifndef WIFI_MANAGER_H
+#define WIFI_MANAGER_H
+
 #include "esp_err.h"
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
@@ -16,3 +19,5 @@
  *          and an IP address is obtained.
  */
 void wifi_manager_init();
+
+#endif // WIFI_MANAGER_H
