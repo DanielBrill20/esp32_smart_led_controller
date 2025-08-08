@@ -1,6 +1,14 @@
 #include "http_server.h"
 
+#define LIGHT_BUF_SIZE 32
+#define BLINKY_BUF_SIZE 32
+#define MORSE_BUF_SIZE 256
+#define COLOR_BUF_SIZE 64
+
 static const char* SERVER_TAG = "http server";
+
+static led_t* led;
+static morse_iterator_t morse_iterator;
 
 // Declaring URI Handlers
 static esp_err_t light_handler(httpd_req_t*);
@@ -38,57 +46,107 @@ static httpd_uri_t color_uri = {
     .user_ctx = NULL
 };
 
+// JSON Helpers
+static esp_err_t read_request_payload(httpd_req_t* req, char* buf, size_t buf_size)
+{
+    int payload_len = req->content_len;
+    int char_index = 0;
+    int received = 0;
+
+    if (payload_len >= buf_size) {
+        httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Content too long");
+        return ESP_FAIL;
+    }
+
+    while (char_index < payload_len) {
+        received = httpd_req_recv(req, buf + char_index, payload_len - char_index);
+        if (received <= 0) {
+            httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to read request");
+            return ESP_FAIL;
+        }
+        char_index += received;
+    }
+    buf[payload_len] = '\0'; // Null-terminate JSON string for parsing
+    return ESP_OK;
+}
+
+static cJSON* json_parser(const char* buf)
+{
+    cJSON* json = cJSON_Parse(buf);
+    if (json == NULL) {
+        ESP_LOGE(SERVER_TAG, "Failed to parse JSON string");
+    }
+    return json;
+}
+
 // URI Handlers
 static esp_err_t light_handler(httpd_req_t* req)
 {
+    char buf[LIGHT_BUF_SIZE];
+    ESP_ERROR_CHECK(read_request_payload(req, buf, LIGHT_BUF_SIZE));
+    cJSON* json = json_parser(buf);
+
+    char* state = cJSON_GetObjectItem(json, "state")->valuestring;
+
+    if (strcmp(state, "on") == 0) {
+        set_led_state(led, ON);
+    } else if (strcmp(state, "off") == 0) {
+        set_led_state(led, OFF);
+    } else {
+        ESP_LOGE(SERVER_TAG, "Unknown light command");
+        cJSON_Delete(json);
+        return ESP_FAIL;
+    }
+
+    set_led_mode(led, LED_MODE_LIGHT);
+    cJSON_Delete(json);
+    httpd_resp_sendstr(req, "Successfully activated Light mode");
     return ESP_OK;
 }
 
 static esp_err_t blinky_handler(httpd_req_t* req)
 {
-    // // The LED strip object
-    // led_strip_handle_t led_handle = NULL;
-    // // Creating the LED strip based on RMT TX channel, checks for errors
-    // // ESP_ERROR_CHECK checks an esp_err_t value and prints an error message to the console if the value isn't 0 (ESP_OK)
-    // ESP_ERROR_CHECK(led_strip_new_rmt_device(&strip_config, &rmt_config, &led_handle));
+    char buf[BLINKY_BUF_SIZE];
+    ESP_ERROR_CHECK(read_request_payload(req, buf, BLINKY_BUF_SIZE));
+    cJSON* json = json_parser(buf);
 
-    // // Creating instance of my own led struct
-    // led my_led = {
-    //     .led_handle = led_handle,
-    //     .index = 0,
-    //     .red = 50,
-    //     .green = 20,
-    //     .blue = 0,
-    //     .state = false
-    // };
+    uint32_t duration = cJSON_GetObjectItem(json, "duration")->valueint;
+    set_led_blink_duration(led, duration);
+    set_led_mode(led, LED_MODE_BLINKY);
 
-    // char buf[10];  // Enough for small payloads like "0", "1"
-    // int ret = httpd_req_recv(req, buf, sizeof(buf) - 1);
-    // if (ret <= 0) {
-    //     httpd_resp_send_500(req);
-    //     return ESP_FAIL;
-    // }
-
-    // buf[ret] = '\0';  // Null-terminate
-
-    // if (strcmp(buf, "0") == 0) {
-    //     ESP_ERROR_CHECK(led_strip_clear(my_led.led_handle));
-    //     ESP_LOGI("", "LED Off");
-    // } else if (strcmp(buf, "1") == 0) {
-    //     ESP_ERROR_CHECK(led_strip_set_pixel(my_led.led_handle, my_led.index, my_led.red, my_led.green, my_led.blue));
-    //     ESP_ERROR_CHECK(led_strip_refresh(my_led.led_handle));
-    //     ESP_LOGI("", "Outputting color (%d, %d, %d)", my_led.red, my_led.green, my_led.blue);
-    // }
+    cJSON_Delete(json);
+    httpd_resp_sendstr(req, "Successfully activated Blinky mode");
     return ESP_OK;
 }
 
 static esp_err_t morse_handler(httpd_req_t* req)
 {
+    char buf[MORSE_BUF_SIZE];
+    ESP_ERROR_CHECK(read_request_payload(req, buf, MORSE_BUF_SIZE));
+    cJSON* json = json_parser(buf);
+
+    char* morse_code = cJSON_GetObjectItem(json, "morse")->valuestring;
+    set_led_morse_code(led, strdup(morse_code));
+    set_led_mode(led, LED_MODE_MORSE);
+
+    cJSON_Delete(json);
+    httpd_resp_sendstr(req, "Successfully activated Morse Code mode");
     return ESP_OK;
 }
 
 static esp_err_t color_handler(httpd_req_t* req)
 {
+    char buf[COLOR_BUF_SIZE];
+    ESP_ERROR_CHECK(read_request_payload(req, buf, COLOR_BUF_SIZE));
+    cJSON* json = json_parser(buf);
+
+    uint8_t red = cJSON_GetObjectItem(json, "red")->valueint;
+    uint8_t green = cJSON_GetObjectItem(json, "green")->valueint;
+    uint8_t blue = cJSON_GetObjectItem(json, "blue")->valueint;
+    set_led_rgb(led, red, green, blue);
+
+    cJSON_Delete(json);
+    httpd_resp_sendstr(req, "Successfully updated LED color");
     return ESP_OK;
 }
 
@@ -112,6 +170,17 @@ static void register_uri_handlers()
 
 void http_server_init()
 {
+    // Setting up server
     start_server();
     register_uri_handlers();
+
+    // Creating LED, preparing iterator for Morse Code mode, initializing timers
+    led = create_led(0);
+    morse_iterator.led = led;
+    morse_iterator.index = 0;
+    led_timers_init(led, &morse_iterator);
+
+    // Ensure LED off after flash
+    set_led_state(led, OFF);
+    set_led_mode(led, LED_MODE_LIGHT);
 }

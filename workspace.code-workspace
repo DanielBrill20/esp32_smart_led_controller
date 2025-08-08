@@ -33,7 +33,9 @@
 			"nvs_flash.h": "c",
 			"event_groups.h": "c",
 			"freertos.h": "c",
-			"http_server.h": "c"
+			"http_server.h": "c",
+			"esp_timer.h": "c",
+			"string.h": "c"
 		}
 	}
 }
