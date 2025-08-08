@@ -85,16 +85,28 @@ static esp_err_t light_handler(httpd_req_t* req)
     char buf[LIGHT_BUF_SIZE];
     ESP_ERROR_CHECK(read_request_payload(req, buf, LIGHT_BUF_SIZE));
     cJSON* json = json_parser(buf);
+    if (json == NULL) {
+        httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Invalid JSON");
+        return ESP_FAIL;
+    }
 
-    char* state = cJSON_GetObjectItem(json, "state")->valuestring;
+    cJSON* state_item = cJSON_GetObjectItem(json, "state");
+    if (state_item == NULL || state_item->valuestring == NULL) {
+        ESP_LOGE(SERVER_TAG, "Missing or invalid 'state' field in JSON");
+        cJSON_Delete(json);
+        httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Missing or invalid 'state' field");
+        return ESP_FAIL;
+    }
+    char* state = state_item->valuestring;
 
     if (strcmp(state, "on") == 0) {
         set_led_state(led, ON);
     } else if (strcmp(state, "off") == 0) {
         set_led_state(led, OFF);
     } else {
-        ESP_LOGE(SERVER_TAG, "Unknown light command");
+        ESP_LOGE(SERVER_TAG, "Unknown light command in JSON");
         cJSON_Delete(json);
+        httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Unknown light command");
         return ESP_FAIL;
     }
 
@@ -109,8 +121,19 @@ static esp_err_t blinky_handler(httpd_req_t* req)
     char buf[BLINKY_BUF_SIZE];
     ESP_ERROR_CHECK(read_request_payload(req, buf, BLINKY_BUF_SIZE));
     cJSON* json = json_parser(buf);
+    if (json == NULL) {
+        httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Invalid JSON");
+        return ESP_FAIL;
+    }
 
-    uint32_t duration = cJSON_GetObjectItem(json, "duration")->valueint;
+    cJSON* duration_item = cJSON_GetObjectItem(json, "duration");
+    if (duration_item == NULL) {
+        ESP_LOGE(SERVER_TAG, "Missing 'duration' field in JSON");
+        cJSON_Delete(json);
+        httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Missing 'duration' field");
+        return ESP_FAIL;
+    }
+    uint32_t duration = duration_item->valueint;
     set_led_blink_duration(led, duration);
     set_led_mode(led, LED_MODE_BLINKY);
 
@@ -124,8 +147,19 @@ static esp_err_t morse_handler(httpd_req_t* req)
     char buf[MORSE_BUF_SIZE];
     ESP_ERROR_CHECK(read_request_payload(req, buf, MORSE_BUF_SIZE));
     cJSON* json = json_parser(buf);
+    if (json == NULL) {
+        httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Invalid JSON");
+        return ESP_FAIL;
+    }
 
-    char* morse_code = cJSON_GetObjectItem(json, "morse")->valuestring;
+    cJSON* morse_code_item = cJSON_GetObjectItem(json, "morse");
+    if (morse_code_item == NULL || morse_code_item->valuestring == NULL) {
+        ESP_LOGE(SERVER_TAG, "Missing or invalid 'morse' field in JSON");
+        cJSON_Delete(json);
+        httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Missing or invalid 'morse' field");
+        return ESP_FAIL;
+    }
+    char* morse_code = morse_code_item->valuestring;
     set_led_morse_code(led, strdup(morse_code));
     set_led_mode(led, LED_MODE_MORSE);
 
@@ -139,10 +173,23 @@ static esp_err_t color_handler(httpd_req_t* req)
     char buf[COLOR_BUF_SIZE];
     ESP_ERROR_CHECK(read_request_payload(req, buf, COLOR_BUF_SIZE));
     cJSON* json = json_parser(buf);
+    if (json == NULL) {
+        httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Invalid JSON");
+        return ESP_FAIL;
+    }
 
-    uint8_t red = cJSON_GetObjectItem(json, "red")->valueint;
-    uint8_t green = cJSON_GetObjectItem(json, "green")->valueint;
-    uint8_t blue = cJSON_GetObjectItem(json, "blue")->valueint;
+    cJSON* red_item = cJSON_GetObjectItem(json, "red");
+    cJSON* green_item = cJSON_GetObjectItem(json, "green");
+    cJSON* blue_item = cJSON_GetObjectItem(json, "blue");
+    if (red_item == NULL || green_item == NULL || blue_item == NULL) {
+        ESP_LOGE(SERVER_TAG, "Missing color field(s) in JSON");
+        cJSON_Delete(json);
+        httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Missing color field(s)");
+        return ESP_FAIL;
+    }
+    uint8_t red = red_item->valueint;
+    uint8_t green = green_item->valueint;
+    uint8_t blue = blue_item->valueint;
     set_led_rgb(led, red, green, blue);
 
     cJSON_Delete(json);
