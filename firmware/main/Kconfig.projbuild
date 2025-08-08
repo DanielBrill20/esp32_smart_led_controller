@@ -5,6 +5,12 @@ menu "Project Configuration"
         help
             GPIO pin used by the LED.
 
+    config MAX_LEDS
+        int "MAX LEDS"
+        default 1
+        help
+            Number of LEDs in the strip.
+
     config WIFI_SSID
         string "WiFi SSID"
         default "myssid"
