@@ -17,7 +17,7 @@ typedef enum {
 } led_mode_t;
 
 /**
- * @brief   LED pixel struct handling mode, state, blink duration, morse code, and color, along with additional necessary ESP features
+ * @brief   LED pixel struct handling mode, state, blink duration, Morse code, and color, along with additional necessary ESP features
  */
 typedef struct led_t led_t; // Forward struct declaration (opaque)
 
@@ -26,9 +26,9 @@ typedef struct led_t led_t; // Forward struct declaration (opaque)
  */
 typedef struct {
     led_t* led;         //!< LED pixel to blink
-    uint8_t index;      //!< Index of current character in morse code string
-    uint8_t str_len;    //!< Length of current morse code string, set internally based on parsed JSON
-    bool gap;           //!< Boolean to indicate the division between dots and dashes to provide a pause between morse code characters, set internally
+    uint8_t index;      //!< Index of current character in Morse code string
+    uint8_t str_len;    //!< Length of current Morse code string, set internally based on parsed JSON
+    bool gap;           //!< Boolean to indicate the division between dots and dashes to provide a pause between Morse code characters, set internally
 } morse_iterator_t;
 
 /**
@@ -60,6 +60,11 @@ esp_err_t destroy_led(led_t* led);
  * 
  * @param led: LED pixel
  * @param mode: Mode to begin (enum)
+ *          - LED_MODE_LIGHT: Sets the LED to either on or off depending on what's set by set_led_state. Off by default
+ *          - LED_MODE_BLINKY: Blinks the LED with the duration set by set_led_blink_duration, in milliseconds (1000 ms means 1 second on, 1 second off)
+ *          - LED_MODE_MORSE: Blinks out some pattern based on a Morse code string set by set_led_morse_code
+ *                  Note: When indicating spaces between English words in Morse code, use a forward slash (/) with no spaces on either side
+ *                  Example: "hi bob" translates to ".... ../-... --- -..."
  */
 void set_led_mode(led_t* led, led_mode_t mode);
 
@@ -84,11 +89,11 @@ void set_led_state(led_t* led, bool state);
 void set_led_blink_duration(led_t* led, uint32_t duration);
 
 /**
- * @brief   Sets the LED pixel morse code
+ * @brief   Sets the LED pixel Morse code
  * 
  * @note Only changes the internal data stored in led, doesn't actually push change to hardware. To push to hardware, call set_led_mode
  * 
- * @note Frees the old morse code string if it exists before storing the new one
+ * @note Frees the old Morse code string if it exists before storing the new one
  * 
  * @param led: LED pixel
  * @param morse_code: String to be stored in preparation to blink

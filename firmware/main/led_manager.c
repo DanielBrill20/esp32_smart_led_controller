@@ -104,7 +104,7 @@ static void blinky_timer_callback(void* arg)
     activate_light(led);
 }
 
-static void blink(morse_iterator_t* iterator, bool state, int milliseconds)
+static void morse_blink(morse_iterator_t* iterator, bool state, int milliseconds)
 {
     set_led_state(iterator->led, state);
     activate_light(iterator->led);
@@ -144,7 +144,7 @@ static void morse_code_timer_callback(void* arg)
 
     // Set off between dots and dashes
     if (iterator->gap) {
-        blink(iterator, OFF, DOT_DASH_SEP_MS);
+        morse_blink(iterator, OFF, DOT_DASH_SEP_MS);
         // Reset gap once gap execution finished
         iterator->gap = false;
         ESP_LOGI(LED_TAG, "Pausing %d ms for gap", DOT_DASH_SEP_MS);
@@ -154,19 +154,19 @@ static void morse_code_timer_callback(void* arg)
     char current_char = iterator->led->config.morse_code[iterator->index];
     switch (current_char) {
         case '.':
-            blink(iterator, ON, DOT_MS);
+            morse_blink(iterator, ON, DOT_MS);
             ESP_LOGI(LED_TAG, "Blinking %d ms for dot", DOT_MS);
             break;
         case '-':
-            blink(iterator, ON, DASH_MS);
+            morse_blink(iterator, ON, DASH_MS);
             ESP_LOGI(LED_TAG, "Blinking %d ms for dash", DASH_MS);
             break;
         case ' ':
-            blink(iterator, OFF, CHAR_SEP_MS);
+            morse_blink(iterator, OFF, CHAR_SEP_MS);
             ESP_LOGI(LED_TAG, "Pausing %d ms before next English character", CHAR_SEP_MS);
             break;
         case '/':
-            blink(iterator, OFF, WORD_SEP_MS);
+            morse_blink(iterator, OFF, WORD_SEP_MS);
             ESP_LOGI(LED_TAG, "Pausing %d ms before next word", WORD_SEP_MS);
             break;
         default:
