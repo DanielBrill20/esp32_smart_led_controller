@@ -27,16 +27,34 @@ class MyApp extends StatelessWidget {
 }
 
 class LedState extends ChangeNotifier {
-  List<int> colorList = [0, 0, 0];
-  bool lightOn = false;
+  bool _lightOn = false;
+  int _duration = 250;
+  String _text = "";
+  List<int> _colorList = [0, 0, 0];
 
-  void setColor(ColorEnum color, int value) {
-    colorList[color.index] = value;
+  bool get lightOn => _lightOn;
+  int get duration => _duration;
+  String get text => _text;
+  List<int> get colorList => List.unmodifiable(_colorList);
+
+  void setLightOn(bool value) {
+    _lightOn = value;
     notifyListeners();
   }
 
-  void setLightOn(bool value) {
-    lightOn = value;
+  void setDuration(int value) {
+    _duration = value;
+    print("Duration updated: $_duration");
+    notifyListeners();
+  }
+
+  void setText(String value) {
+    _text = value;
+    notifyListeners();
+  }
+
+  void setColor(ColorEnum color, int value) {
+    _colorList[color.index] = value;
     notifyListeners();
   }
 }
@@ -167,6 +185,12 @@ class RemotePage extends StatelessWidget {
                     border: OutlineInputBorder(),
                     labelText: 'Duration',
                   ),
+                  onChanged: (value) {
+                    var inputVal = int.tryParse(value);
+                    if (inputVal != null) {
+                      ledState.setDuration(inputVal);
+                    }
+                  },
                 ),
               ),
               Expanded(flex: 1, child: Center(child: Text('ms'))),
