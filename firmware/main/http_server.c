@@ -91,17 +91,16 @@ static esp_err_t light_handler(httpd_req_t* req)
     }
 
     cJSON* state_item = cJSON_GetObjectItem(json, "state");
-    if (state_item == NULL || state_item->valuestring == NULL) {
-        ESP_LOGE(SERVER_TAG, "Missing or invalid 'state' field in JSON");
+    if (state_item == NULL) {
+        ESP_LOGE(SERVER_TAG, "Missing 'state' field in JSON");
         cJSON_Delete(json);
         httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Missing or invalid 'state' field");
         return ESP_FAIL;
     }
-    char* state = state_item->valuestring;
 
-    if (strcmp(state, "on") == 0) {
+    if (cJSON_IsTrue(state_item)) {
         set_led_state(led, ON);
-    } else if (strcmp(state, "off") == 0) {
+    } else if (cJSON_IsFalse(state_item)) {
         set_led_state(led, OFF);
     } else {
         ESP_LOGE(SERVER_TAG, "Unknown light command in JSON");

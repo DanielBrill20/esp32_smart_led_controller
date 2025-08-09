@@ -1,8 +1,30 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:http/http.dart' as http;
 
 enum ColorEnum {red, green, blue}
 enum CommsEnum {ble, wifi}
+
+final Map<String, String> morseCodeDictionary = {
+  // Letters
+  'A': '.-', 'B': '-...', 'C': '-.-.', 'D': '-..', 'E': '.', 'F': '..-.',
+  'G': '--.', 'H': '....', 'I': '..', 'J': '.---', 'K': '-.-', 'L': '.-..',
+  'M': '--', 'N': '-.', 'O': '---', 'P': '.--.', 'Q': '--.-', 'R': '.-.',
+  'S': '...', 'T': '-', 'U': '..-', 'V': '...-', 'W': '.--', 'X': '-..-',
+  'Y': '-.--', 'Z': '--..',
+
+  // Numbers
+  '0': '-----', '1': '.----', '2': '..---', '3': '...--', '4': '....-', 
+  '5': '.....', '6': '-....', '7': '--...', '8': '---..', '9': '----.',
+
+  // Punctuation
+  '.': '.-.-.-', ',': '--..--', '?': '..--..', '\'': '.----.', '!': '-.-.--',
+  '/': '-..-.', '(': '-.--.', ')': '-.--.-', '&': '.-...', ':': '---...',
+  ';': '-.-.-.', '=': '-...-', '+': '.-.-.', '-': '-....-', '_': '..--.-',
+  '"': '.-..-.', '\$': '...-..-', '@': '.--.-.', ' ': '/'
+};
 
 void main() {
   runApp(const MyApp());
@@ -30,7 +52,7 @@ class LedState extends ChangeNotifier {
   bool _lightOn = false;
   int _duration = 250;
   String _text = "";
-  List<int> _colorList = [0, 0, 0];
+  List<int> _colorList = [25, 25, 25];
 
   bool get lightOn => _lightOn;
   int get duration => _duration;
@@ -40,11 +62,15 @@ class LedState extends ChangeNotifier {
   void setLightOn(bool value) {
     _lightOn = value;
     notifyListeners();
+
+    var url = Uri.http('192.168.50.199', '/light');
+    var response = http.post(url, body: jsonEncode({
+      "state": value
+    }));
   }
 
   void setDuration(int value) {
     _duration = value;
-    print("Duration updated: $_duration");
     notifyListeners();
   }
 
@@ -56,6 +82,13 @@ class LedState extends ChangeNotifier {
   void setColor(ColorEnum color, int value) {
     _colorList[color.index] = value;
     notifyListeners();
+
+    var url = Uri.http('192.168.50.199', '/color');
+    var response = http.post(url, body: jsonEncode({
+      "red": _colorList[ColorEnum.red.index],
+      "green": _colorList[ColorEnum.green.index],
+      "blue": _colorList[ColorEnum.blue.index]
+    }));
   }
 }
 
@@ -195,7 +228,12 @@ class RemotePage extends StatelessWidget {
               ),
               Expanded(flex: 1, child: Center(child: Text('ms'))),
               ElevatedButton(
-                onPressed: () {},
+                onPressed: () {
+                  var url = Uri.http('192.168.50.199', '/blinky');
+                  var response = http.post(url, body: jsonEncode({
+                    "duration": ledState.duration
+                  }));
+                },
                 child: Icon(Icons.send),
               ),
             ],
@@ -214,11 +252,19 @@ class RemotePage extends StatelessWidget {
                     border: OutlineInputBorder(),
                     labelText: 'Message',
                   ),
+                  onChanged: (value) {
+                    ledState.setText(value);
+                  },
                 ),
               ),
               Expanded(flex: 1, child: SizedBox()),
               ElevatedButton(
-                onPressed: () {},
+                onPressed: () {
+                  var url = Uri.http('192.168.50.199', '/morse');
+                  var response = http.post(url, body: jsonEncode({
+                    "morse": englishToMorseCode(ledState.text)
+                  }));
+                },
                 child: Icon(Icons.send),
               ),
             ],
@@ -410,3 +456,14 @@ class _RGBSliderState extends State<RGBSlider> {
 
 List<Text> wordsToTextWidgets(String words, TextStyle? style) =>
   words.split(' ').map((word) => Text(word, style: style)).toList();
+
+String englishToMorseCode(String english) {
+  String morseCode = "";
+  for (int i = 0; i < english.length; i++) {
+    String char = english[i].toUpperCase();
+    if (morseCodeDictionary.containsKey(char)) {
+      morseCode += "${morseCodeDictionary[char]!} ";
+    }
+  }
+  return morseCode.replaceAll(" / ", "/").trim();
+}
