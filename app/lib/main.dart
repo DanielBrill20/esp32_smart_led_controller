@@ -198,6 +198,7 @@ class RemotePage extends StatelessWidget {
               Expanded(
                 child: Center(
                   child: Switch(
+                    activeColor: Colors.orangeAccent,
                     value: ledState.lightOn,
                     onChanged: (value) {
                       ledState.setLightOn(value);
