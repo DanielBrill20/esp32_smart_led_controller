@@ -63,9 +63,13 @@ class LedState extends ChangeNotifier {
     notifyListeners();
 
     var url = Uri.http('192.168.50.199', '/light');
-    var response = http.post(url, body: jsonEncode({
-      "state": value
-    }));
+    var response = http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        "state": value
+      })
+    );
   }
 
   void setDuration(int value) {
@@ -83,11 +87,15 @@ class LedState extends ChangeNotifier {
     notifyListeners();
 
     var url = Uri.http('192.168.50.199', '/color');
-    var response = http.post(url, body: jsonEncode({
-      "red": _colorList[ColorEnum.red.index],
-      "green": _colorList[ColorEnum.green.index],
-      "blue": _colorList[ColorEnum.blue.index]
-    }));
+    var response = http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        "red": _colorList[ColorEnum.red.index],
+        "green": _colorList[ColorEnum.green.index],
+        "blue": _colorList[ColorEnum.blue.index]
+      })
+    );
   }
 }
 
@@ -229,9 +237,13 @@ class RemotePage extends StatelessWidget {
               ElevatedButton(
                 onPressed: () {
                   var url = Uri.http('192.168.50.199', '/blinky');
-                  var response = http.post(url, body: jsonEncode({
-                    "duration": ledState.duration
-                  }));
+                  var response = http.post(
+                    url,
+                    headers: {'Content-Type': 'application/json'},
+                    body: jsonEncode({
+                      "duration": ledState.duration
+                    })
+                  );
                 },
                 child: Icon(Icons.send),
               ),
@@ -260,9 +272,13 @@ class RemotePage extends StatelessWidget {
               ElevatedButton(
                 onPressed: () {
                   var url = Uri.http('192.168.50.199', '/morse');
-                  var response = http.post(url, body: jsonEncode({
-                    "morse": englishToMorseCode(ledState.text)
-                  }));
+                  var response = http.post(
+                    url,
+                    headers: {'Content-Type': 'application/json'},
+                    body: jsonEncode({
+                      "morse": englishToMorseCode(ledState.text)
+                    })
+                  );
                 },
                 child: Icon(Icons.send),
               ),
